@@ -20,7 +20,7 @@ import {
 import { VolumeManager } from "react-native-volume-manager";
 
 const audioSource = require("../assets/audio/picture.mp3");
-const cameraViewfinderSize = 150;
+const cameraViewfinderSize = 125;
 
 VolumeManager.showNativeVolumeUI({ enabled: false });
 
@@ -78,6 +78,7 @@ export default function Index() {
 
       // Crop again the remaning to 3:2 aspect ratio
       const croppedWidth = imageHeight * (3 / 2);
+
       context.reset().crop({
         originX: 0,
         originY: 0,
@@ -111,11 +112,11 @@ export default function Index() {
         name: "photo.jpg",
       } as any);
 
-      // formData.append("user_prompt", capturedText);
-      formData.append(
-        "user_prompt",
-        "Turn this into a superhero comic book cover"
-      );
+      formData.append("user_prompt", capturedText);
+      // formData.append(
+      //   "user_prompt",
+      //   "Turn this into a superhero comic book cover"
+      // );
 
       const response = await fetch(`${config.API_URL}/images`, {
         method: "POST",
@@ -159,7 +160,7 @@ export default function Index() {
           setCapturedImage(croppedImageUri);
 
           // Upload the cropped photo with captured text
-          // await uploadPhoto(croppedImageUri, capturedText);
+          await uploadPhoto(croppedImageUri, capturedText);
         }
       } catch (error) {
         console.error("Error taking picture:", error);
@@ -208,7 +209,7 @@ export default function Index() {
       <View
         style={{
           ...styles.cameraContainer,
-          top: dimensions.height / 2 - cameraViewfinderSize / 2,
+          top: dimensions.height / 2 - cameraViewfinderSize / 2 + 133,
         }}
       >
         <CameraView
