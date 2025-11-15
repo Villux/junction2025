@@ -264,16 +264,21 @@ def prepare_for_zoemini(
     """
     Prepare an image for Canon Zoemini 2 (2x3 inch ZINK paper).
 
-    - Crops to 2:3 aspect ratio (portrait) or 3:2 (landscape)
-    - Resizes to 628x1500 px by default (approx 2x3 inches at 314x500 dpi)
+        - Crops to 2:3 aspect ratio (portrait), 3:2 (landscape), or 1:1 (square)
+        - Resizes to 628x1500 px by default (approx 2x3 inches at 314x500 dpi);
+            when square is requested, uses the smaller dimension for both sides
     - Saves with dpi metadata (314, 500)
     """
     img = Image.open(input_path).convert("RGB")
     w, h = img.size
 
-    # Swap if landscape requested
-    if orientation == "landscape":
+    orientation_normalized = orientation.lower()
+    if orientation_normalized == "landscape":
         target_width, target_height = target_height, target_width
+    elif orientation_normalized == "square":
+        target_side = min(target_width, target_height)
+        target_width = target_side
+        target_height = target_side
 
     target_ratio = target_width / target_height
     img_ratio = w / h
