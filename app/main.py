@@ -112,7 +112,12 @@ async def upload_image(
 
 @app.get("/images/gcs", tags=["images"], dependencies=[Depends(verify_api_key)])
 async def list_gcs_images() -> dict[str, Any]:
-    """Return `gs://` URIs for all image blobs stored in the configured bucket."""
+    """
+    Return `gs://` URIs for all image blobs stored in the configured bucket.
+    
+    curl https://junction2025-dev-987057572708.europe-north1.run.app/images/gcs \
+        -H "X-API-Key: $JUNCTION_API_KEY"
+    """
 
     try:
         image_urls = await asyncio.to_thread(
