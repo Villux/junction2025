@@ -1,0 +1,8 @@
+gcloud builds submit --tag europe-north1-docker.pkg.dev/junction2025-478314/junction-api/junction2025:dev 
+
+
+gcloud run deploy junction2025-dev \
+  --image europe-north1-docker.pkg.dev/junction2025-478314/junction-api/junction2025:dev \
+  --region europe-north1 \
+  --allow-unauthenticated \
+  --set-secrets=JUNCTION_API_KEY=JUNCTION_API_KEY:latest,GEMINI_API_KEY=GEMINI_API_KEY:latest
