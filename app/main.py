@@ -123,14 +123,14 @@ async def upload_image(
 @app.get("/images/gcs", tags=["images"], dependencies=[Depends(verify_api_key)])
 async def list_gcs_images() -> dict[str, Any]:
     """
-    Return `gs://` URIs for all image blobs stored in the configured bucket.
-    
+    Return HTTPS URLs and creation timestamps for image blobs in the configured bucket.
+
     curl https://junction2025-dev-987057572708.europe-north1.run.app/images/gcs \
         -H "X-API-Key: $JUNCTION_API_KEY"
     """
 
     try:
-        image_urls = await asyncio.to_thread(
+        image_items = await asyncio.to_thread(
             _list_bucket_image_urls, GCS_IMAGES_BUCKET
         )
     except Exception as exc:
@@ -142,8 +142,8 @@ async def list_gcs_images() -> dict[str, Any]:
 
     return {
         "bucket": GCS_IMAGES_BUCKET,
-        "count": len(image_urls),
-        "items": image_urls,
+        "count": len(image_items),
+        "items": image_items,
     }
 
 
@@ -172,14 +172,16 @@ def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
         return None
     
 
-def _list_bucket_image_urls(bucket_name: str) -> list[str]:
+def _list_bucket_image_urls(bucket_name: str) -> list[dict[str, str | None]]:
     client = storage.Client()
-    image_urls: list[str] = []
+    image_urls: list[dict[str, str | None]] = []
     for blob in client.list_blobs(bucket_name):
         suffix = Path(blob.name).suffix.lower()
         if suffix and suffix in GCS_IMAGE_EXTENSIONS:
             https_url = f"https://storage.googleapis.com/{bucket_name}/{blob.name}"
-            image_urls.append(https_url)
+            created_at = getattr(blob, "time_created", None)
+            created_at_iso = created_at.isoformat() if created_at else None
+            image_urls.append({"url": https_url, "created_at": created_at_iso})
     return image_urls
 
 

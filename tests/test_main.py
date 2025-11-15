@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -69,6 +70,7 @@ def test_list_gcs_images_filters_non_images() -> None:
     client = TestClient(app)
     png_blob = MagicMock()
     png_blob.name = "generated/foo.png"
+    png_blob.time_created = datetime(2024, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
     txt_blob = MagicMock()
     txt_blob.name = "notes/readme.txt"
 
@@ -85,4 +87,9 @@ def test_list_gcs_images_filters_non_images() -> None:
     payload = response.json()
     assert payload["bucket"] == "eiai-images"
     assert payload["count"] == 1
-    assert payload["items"] == ["gs://eiai-images/generated/foo.png"]
+    assert payload["items"] == [
+        {
+            "url": "https://storage.googleapis.com/eiai-images/generated/foo.png",
+            "created_at": "2024-01-02T03:04:05+00:00",
+        }
+    ]
