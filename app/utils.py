@@ -13,6 +13,8 @@ Subtly include visual references to the hackathon setting:
 
 This image should evoke the spirit of Junction 2025, which hosts events in 15+ countries and culminates in the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16). Maintain a square format consistent with the original Polaroid composition.”
 
+This master prompt is extended with verbally given user input. Follow the user instructions so that main style guides of this prompt are not violated.
+
 RETURN AN EDITED IMAGE FROM THE GIVEN ORIGINAL IMAGE
 """
 
