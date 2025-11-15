@@ -1,5 +1,6 @@
 MASTER_PROMPT = """
 
+## MASTER PROMPT ##
 Transform this Polaroid-style square photo of a hackathon team into a retro-futuristic, cool, and sexy group portrait. Keep all faces and likenesses true to the original image.
 
 Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, and glowing pink highlights. Place the team in front of a neon-drenched futuristic cityscape at dusk, with atmospheric haze and soft nostalgic glow.
@@ -13,9 +14,11 @@ Subtly include visual references to the hackathon setting:
 
 This image should evoke the spirit of Junction 2025, which hosts events in 15+ countries and culminates in the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16). Maintain a square format consistent with the original Polaroid composition.”
 
-This master prompt is extended with verbally given user input. Follow the user instructions so that main style guides of this prompt are not violated.
+This master prompt is extended with verbally given user input. Follow the user instructions so that main style guides of this prompt are not violated. If instructions are contradictory, prefer the master prompt and only take tiny details from user instructions.
 
 RETURN AN EDITED IMAGE FROM THE GIVEN ORIGINAL IMAGE
+
+## MASTER PROMPT END ##
 """
 
 
