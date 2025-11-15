@@ -79,14 +79,18 @@ async def upload_image(
     for file in files:
         original_name = file.filename
         safe_name = Path(original_name or "uploaded").name
-        destination = Path("/tmp") / f"original_{safe_name}"
+        safe_suffix = Path(safe_name).suffix
+        unique_token = uuid4().hex
+        destination = Path("/tmp") / f"original_{unique_token}{safe_suffix}"
         destination.parent.mkdir(parents=True, exist_ok=True)
 
         content = await file.read()
         destination.write_bytes(content)
         await file.close()
 
-        destination_cropped = Path("/tmp") / f"original_cropped_{safe_name}"
+        destination_cropped = destination.with_name(
+            f"{destination.stem}_cropped{safe_suffix}"
+        )
         # NOTE: no impact yet from this
         prepare_for_zoemini(
             input_path=destination,

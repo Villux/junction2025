@@ -7,7 +7,7 @@ Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep b
 Update their outfits to stylishly retro-tech attire, blending 80s futurism with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking.
 
 Subtly include visual references to the hackathon setting:
-– Futuristic UI holograms or glowing circuit-pattern accents
+– Futuristic UI holograms and led lights and displays
 – A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
 – Elements suggesting a global tech community (Finland, Japan, USA, Netherlands).
 
