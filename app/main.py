@@ -178,7 +178,8 @@ def _list_bucket_image_urls(bucket_name: str) -> list[str]:
     for blob in client.list_blobs(bucket_name):
         suffix = Path(blob.name).suffix.lower()
         if suffix and suffix in GCS_IMAGE_EXTENSIONS:
-            image_urls.append(f"gs://{bucket_name}/{blob.name}")
+            https_url = f"https://storage.googleapis.com/{bucket_name}/{blob.name}"
+            image_urls.append(https_url)
     return image_urls
 
 
