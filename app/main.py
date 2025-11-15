@@ -99,9 +99,12 @@ async def upload_image(
             target_width=628,
             target_height=1500,
         )
+        metadata = {}
+        if normalized_prompt:
+            metadata["snippet"] = normalized_prompt
 
         gcs_uri = await asyncio.to_thread(
-            _upload_to_gcs, destination, GCS_IMAGES_BUCKET
+            _upload_to_gcs, destination, GCS_IMAGES_BUCKET, metadata
         )
 
         image_paths.append(destination)
@@ -162,7 +165,9 @@ def _process_google_ai(image_paths: list[Path], user_prompt: str | None) -> None
         result_path.write_text(json.dumps(google_ai, indent=2, sort_keys=True))
 
 
-def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
+def _upload_to_gcs(
+    path: Path, bucket_name: str | None, metadata: dict[str, str] | None = None
+) -> str | None:
     if not bucket_name:
         return None
     try:
@@ -170,6 +175,11 @@ def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
         bucket = client.bucket(bucket_name)
         blob = bucket.blob(path.name)
         blob.upload_from_filename(path.as_posix())
+        if metadata:
+            existing_metadata = blob.metadata or {}
+            existing_metadata.update({k: v for k, v in metadata.items() if v is not None})
+            blob.metadata = existing_metadata
+            blob.patch()
         return f"gs://{bucket_name}/{blob.name}"
     except Exception:
         logger.exception("Failed to upload %s to bucket %s", path, bucket_name)
@@ -185,7 +195,15 @@ def _list_bucket_image_urls(bucket_name: str) -> list[dict[str, str | None]]:
             https_url = f"https://storage.googleapis.com/{bucket_name}/{blob.name}"
             created_at = getattr(blob, "time_created", None)
             created_at_iso = created_at.isoformat() if created_at else None
-            image_urls.append({"url": https_url, "created_at": created_at_iso})
+            blob_metadata = blob.metadata or {}
+            snippet = blob_metadata.get("snippet")
+            image_urls.append(
+                {
+                    "url": https_url,
+                    "created_at": created_at_iso,
+                    "snippet": snippet,
+                }
+            )
     return image_urls
 
 
@@ -223,6 +241,7 @@ def _call_gemini(
     texts: list[str] = []
     generated_paths: list[str] = []
     generated_gcs_paths: list[str] = []
+    metadata = {"snippet": user_prompt} if user_prompt else {}
 
     for index, part in enumerate(getattr(response, "parts", [])):
         text = getattr(part, "text", None)
@@ -242,7 +261,7 @@ def _call_gemini(
             )
             generated_image.save(generated_path)
             generated_paths.append(str(generated_path))
-            gcs_uri = _upload_to_gcs(generated_path, GCS_IMAGES_BUCKET)
+            gcs_uri = _upload_to_gcs(generated_path, GCS_IMAGES_BUCKET, metadata)
             if gcs_uri:
                 generated_gcs_paths.append(gcs_uri)
 
