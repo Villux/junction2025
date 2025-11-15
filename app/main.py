@@ -86,6 +86,16 @@ async def upload_image(
         destination.write_bytes(content)
         await file.close()
 
+        destination_cropped = Path("/tmp") / f"original_cropped_{safe_name}"
+        # NOTE: no impact yet from this
+        prepare_for_zoemini(
+            input_path=destination,
+            output_path=destination_cropped,
+            orientation="landscape",
+            target_width=628,
+            target_height=1500,
+        )
+
         gcs_uri = await asyncio.to_thread(
             _upload_to_gcs, destination, GCS_IMAGES_BUCKET
         )
@@ -243,3 +253,53 @@ def _call_gemini(
         payload["generated_images_gcs"] = generated_gcs_paths
 
     return payload
+
+def prepare_for_zoemini(
+    input_path,
+    output_path,
+    orientation="portrait",
+    target_width=628,
+    target_height=1500,
+):
+    """
+    Prepare an image for Canon Zoemini 2 (2x3 inch ZINK paper).
+
+    - Crops to 2:3 aspect ratio (portrait) or 3:2 (landscape)
+    - Resizes to 628x1500 px by default (approx 2x3 inches at 314x500 dpi)
+    - Saves with dpi metadata (314, 500)
+    """
+    img = Image.open(input_path).convert("RGB")
+    w, h = img.size
+
+    # Swap if landscape requested
+    if orientation == "landscape":
+        target_width, target_height = target_height, target_width
+
+    target_ratio = target_width / target_height
+    img_ratio = w / h
+
+    # --- Center crop to target aspect ratio ---
+    if img_ratio > target_ratio:
+        # Image is wider than needed -> crop width
+        new_width = int(h * target_ratio)
+        left = (w - new_width) // 2
+        right = left + new_width
+        top = 0
+        bottom = h
+    else:
+        # Image is taller/narrower than needed -> crop height
+        new_height = int(w / target_ratio)
+        top = (h - new_height) // 2
+        bottom = top + new_height
+        left = 0
+        right = w
+
+    img_cropped = img.crop((left, top, right, bottom))
+
+    # --- Resize to target pixel size ---
+    img_resized = img_cropped.resize((target_width, target_height), Image.LANCZOS)
+
+    # --- Save with DPI metadata for 2" x 3" print (approx 314 x 500 dpi) ---
+    img_resized.save(output_path, dpi=(314, 500), quality=95)
+
+    return output_path
