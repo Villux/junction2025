@@ -2,8 +2,9 @@ import json
 import os
 import time
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # type: ignore[import-not-found]
 
 os.environ["JUNCTION_API_KEY"] = "test-key"
 os.environ.pop("GOOGLE_API_KEY", None)
@@ -62,3 +63,26 @@ def test_upload_image_stores_file() -> None:
 
     stored_path.unlink()
     result_path.unlink()
+
+
+def test_list_gcs_images_filters_non_images() -> None:
+    client = TestClient(app)
+    png_blob = MagicMock()
+    png_blob.name = "generated/foo.png"
+    txt_blob = MagicMock()
+    txt_blob.name = "notes/readme.txt"
+
+    storage_instance = MagicMock()
+    storage_instance.list_blobs.return_value = [png_blob, txt_blob]
+
+    with patch("app.main.storage.Client", return_value=storage_instance):
+        response = client.get(
+            "/images/gcs",
+            headers={"X-API-Key": "test-key"},
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["bucket"] == "eiai-images"
+    assert payload["count"] == 1
+    assert payload["items"] == ["gs://eiai-images/generated/foo.png"]

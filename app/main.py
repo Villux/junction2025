@@ -32,6 +32,8 @@ API_KEY_NAME = "X-API-Key"
 EXPECTED_API_KEY = os.environ.get("JUNCTION_API_KEY")
 API_KEY_HEADER = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 GOOGLE_MODEL_NAME = os.environ.get("GOOGLE_AI_MODEL", "gemini-2.5-flash-image")
+GCS_IMAGES_BUCKET = os.environ.get("GOOGLE_STORAGE_BUCKET") or "eiai-images"
+GCS_IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tiff"}
 
 
 
@@ -103,6 +105,28 @@ async def upload_image(
     }
 
 
+@app.get("/images/gcs", tags=["images"], dependencies=[Depends(verify_api_key)])
+async def list_gcs_images() -> dict[str, Any]:
+    """Return `gs://` URIs for all image blobs stored in the configured bucket."""
+
+    try:
+        image_urls = await asyncio.to_thread(
+            _list_bucket_image_urls, GCS_IMAGES_BUCKET
+        )
+    except Exception as exc:
+        logger.exception("Failed to list images in bucket %s", GCS_IMAGES_BUCKET)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to retrieve image list from Google Cloud Storage.",
+        ) from exc
+
+    return {
+        "bucket": GCS_IMAGES_BUCKET,
+        "count": len(image_urls),
+        "items": image_urls,
+    }
+
+
 def _process_google_ai(image_paths: list[Path], user_prompt: str | None) -> None:
     """Background task that forwards the image to Google AI and persists the result."""
     if not image_paths:
@@ -127,6 +151,16 @@ def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
         logger.exception("Failed to upload %s to bucket %s", path, bucket_name)
         return None
     
+
+def _list_bucket_image_urls(bucket_name: str) -> list[str]:
+    client = storage.Client()
+    image_urls: list[str] = []
+    for blob in client.list_blobs(bucket_name):
+        suffix = Path(blob.name).suffix.lower()
+        if suffix and suffix in GCS_IMAGE_EXTENSIONS:
+            image_urls.append(f"gs://{bucket_name}/{blob.name}")
+    return image_urls
+
 
 def _call_gemini(
     image_paths: list[Path], api_key: str | None, user_prompt: str | None
@@ -181,7 +215,7 @@ def _call_gemini(
             )
             generated_image.save(generated_path)
             generated_paths.append(str(generated_path))
-            gcs_uri = _upload_to_gcs(generated_path, "eiai-images")
+            gcs_uri = _upload_to_gcs(generated_path, GCS_IMAGES_BUCKET)
             if gcs_uri:
                 generated_gcs_paths.append(gcs_uri)
 
