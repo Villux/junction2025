@@ -79,22 +79,27 @@ async def upload_image(
     for file in files:
         original_name = file.filename
         safe_name = Path(original_name or "uploaded").name
-        destination = Path("/tmp") / f"{uuid4().hex}_{safe_name}"
+        destination = Path("/tmp") / f"original_{safe_name}"
         destination.parent.mkdir(parents=True, exist_ok=True)
 
         content = await file.read()
         destination.write_bytes(content)
         await file.close()
 
-        image_paths.append(destination)
-        stored_items.append(
-            {
-                "original_filename": original_name,
-                "stored_path": str(destination),
-                "google_ai": {"status": "queued"},
-                "prompt": normalized_prompt,
-            }
+        gcs_uri = await asyncio.to_thread(
+            _upload_to_gcs, destination, GCS_IMAGES_BUCKET
         )
+
+        image_paths.append(destination)
+        stored_item = {
+            "original_filename": original_name,
+            "stored_path": str(destination),
+            "google_ai": {"status": "queued"},
+            "prompt": normalized_prompt,
+        }
+        if gcs_uri:
+            stored_item["stored_path_gcs"] = gcs_uri
+        stored_items.append(stored_item)
     if image_paths:
         # background_tasks.add_task(_process_google_ai, image_paths, normalized_prompt)
         _process_google_ai(image_paths, normalized_prompt)
