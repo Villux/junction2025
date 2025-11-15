@@ -13,6 +13,7 @@ from fastapi import (
     Depends,
     FastAPI,
     File,
+    Form,
     HTTPException,
     UploadFile,
     status,
@@ -57,17 +58,21 @@ async def health_check() -> dict[str, str]:
 
 @app.post("/images", tags=["images"], dependencies=[Depends(verify_api_key)])
 async def upload_image(
-    background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)
+    background_tasks: BackgroundTasks,
+    files: list[UploadFile] = File(...),
+    user_prompt: str | None = Form(None),
 ) -> dict[str, Any]:
     """
     Accept uploaded image files and persist them to /tmp with unique names.
     
-    curl -X POST http://https://junction2025-dev-987057572708.europe-north1.run.app/images \
+    curl -X POST https://junction2025-dev-987057572708.europe-north1.run.app/images \
         -H "X-API-Key: $JUNCTION_API_KEY" \
-        -F "files=@/Users/villetoiviainen/Downloads/junction_test.jpg;type=image/jpg"
+        -F "files=@/Users/villetoiviainen/Downloads/junction_test.jpg;type=image/jpg" \
+        -F "user_prompt=Tell me a short story about this image"
     """
     stored_items: list[dict[str, Any]] = []
     image_paths: list[Path] = []
+    normalized_prompt = user_prompt.strip() if user_prompt and user_prompt.strip() else None
 
     for file in files:
         original_name = file.filename
@@ -85,23 +90,25 @@ async def upload_image(
                 "original_filename": original_name,
                 "stored_path": str(destination),
                 "google_ai": {"status": "queued"},
+                "prompt": normalized_prompt,
             }
         )
     if image_paths:
-        # background_tasks.add_task(_process_google_ai, image_paths)
-        _process_google_ai(image_paths)
+        # background_tasks.add_task(_process_google_ai, image_paths, normalized_prompt)
+        _process_google_ai(image_paths, normalized_prompt)
     return {
         "message": "images stored",
+        "prompt": normalized_prompt,
         "items": stored_items,
     }
 
 
-def _process_google_ai(image_paths: list[Path]) -> None:
+def _process_google_ai(image_paths: list[Path], user_prompt: str | None) -> None:
     """Background task that forwards the image to Google AI and persists the result."""
     if not image_paths:
         return
     api_key = os.environ.get("GEMINI_API_KEY")
-    google_ai = _call_gemini(image_paths, api_key)
+    google_ai = _call_gemini(image_paths, api_key, user_prompt)
     for image_path in image_paths:
         result_path = image_path.with_name(f"{image_path.stem}_google_ai.json")
         result_path.write_text(json.dumps(google_ai, indent=2, sort_keys=True))
@@ -121,18 +128,23 @@ def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
         return None
     
 
-def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, object]:
+def _call_gemini(
+    image_paths: list[Path], api_key: str | None, user_prompt: str | None
+) -> dict[str, object]:
     """Synchronous helper that invokes Gemini and extracts useful payload."""
     if not api_key:
         return {
             "status": "skipped",
             "reason": "GOOGLE_API_KEY is not configured",
+            "user_prompt": user_prompt,
         }
 
     client = genai.Client(api_key=api_key)  # type: ignore[call-arg]
     base_path = image_paths[0] if image_paths else None
     images: list[Image.Image] = []
     contents: list[Any] = [MASTER_PROMPT]
+    if user_prompt:
+        contents.append(user_prompt)
     try:
         for path in image_paths:
             image = Image.open(path)
@@ -176,6 +188,7 @@ def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, obje
     payload: dict[str, object] = {
         "status": "ok",
         "model": GOOGLE_MODEL_NAME,
+        "user_prompt": user_prompt,
     }
 
     if texts:
