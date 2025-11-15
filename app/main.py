@@ -260,8 +260,14 @@ def _call_gemini(
                 f"{base_path.stem}_gemini_{index}.png"
             )
             generated_image.save(generated_path)
-            generated_paths.append(str(generated_path))
-            gcs_uri = _upload_to_gcs(generated_path, GCS_IMAGES_BUCKET, metadata)
+            _upload_to_gcs(generated_path, GCS_IMAGES_BUCKET, metadata)
+            
+            generated_path_cropped = base_path.with_name(
+                f"{base_path.stem}_cropped_{index}.png"
+            )
+            image = prepare_for_zoemini(generated_path, generated_path_cropped, orientation="square")
+            generated_paths.append(str(generated_path_cropped))
+            gcs_uri = _upload_to_gcs(generated_path_cropped, GCS_IMAGES_BUCKET, metadata)
             if gcs_uri:
                 generated_gcs_paths.append(gcs_uri)
 
