@@ -1,16 +1,19 @@
 MASTER_PROMPT = """
 
-I have provided one or more images below.
-The first image is the TARGET. 
-Other images are STYLE REFERENCE.
+Transform this Polaroid-style square photo of a hackathon team into a retro-futuristic, cool, and sexy group portrait. Keep all faces and likenesses true to the original image.
 
-Please edit the TARGET image so that it adopts the lighting and color palette and style of the STYLE REFERENCE images. 
+Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, and glowing pink highlights. Place the team in front of a neon-drenched futuristic cityscape at dusk, with atmospheric haze and soft nostalgic glow.
 
-The Urban Tech
-Reimagine this polaroid of our hackathon team as a cool and sexy urban tech-themed avatar. The style is photorealistic with a fashion-forward edge. Maintain the identities of the team members. Dress the team in stylish, modern streetwear with subtle tech-inspired accessories. The setting is a sleek, minimalist co-working space at night, with ambient, moody lighting from laptop screens and overhead fixtures. The feel is sophisticated, focused, and effortlessly cool. Retain the square composition.
+Update their outfits to stylishly retro-tech attire, blending 80s futurism with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking.
 
-Hackathon  description:
-In 2025, Junction hosts events in +15 countries including Finland, Japan, United States and the Netherlands. The 2025 calendar year will come to a grand finale at the Junction 2025 Main Event which will be the biggest AI Hackathon in the world with +1500 participants under the same roof in Espoo Nov 14 - 16.
+Subtly include visual references to the hackathon setting:
+– Futuristic UI holograms or glowing circuit-pattern accents
+– A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
+– Elements suggesting a global tech community (Finland, Japan, USA, Netherlands).
+
+This image should evoke the spirit of Junction 2025, which hosts events in 15+ countries and culminates in the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16). Maintain a square format consistent with the original Polaroid composition.”
+
+RETURN AN EDITED IMAGE FROM THE GIVEN ORIGINAL IMAGE
 """
 
 
