@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 google-genai
 Pillow
+python-multipart
+google-cloud-storage

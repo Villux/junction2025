@@ -22,6 +22,7 @@ from PIL import Image
 from app.utils import MASTER_PROMPT
 
 from google import genai
+from google.cloud import storage
 
 app = FastAPI(title="Junction API", version="0.1.0")
 logger = logging.getLogger(__name__)
@@ -58,7 +59,13 @@ async def health_check() -> dict[str, str]:
 async def upload_image(
     background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)
 ) -> dict[str, Any]:
-    """Accept uploaded image files and persist them to /tmp with unique names."""
+    """
+    Accept uploaded image files and persist them to /tmp with unique names.
+    
+    curl -X POST http://https://junction2025-dev-987057572708.europe-north1.run.app/images \
+        -H "X-API-Key: $JUNCTION_API_KEY" \
+        -F "files=@/Users/villetoiviainen/Downloads/junction_test.jpg;type=image/jpg"
+    """
     stored_items: list[dict[str, Any]] = []
     image_paths: list[Path] = []
 
@@ -100,6 +107,20 @@ def _process_google_ai(image_paths: list[Path]) -> None:
         result_path.write_text(json.dumps(google_ai, indent=2, sort_keys=True))
 
 
+def _upload_to_gcs(path: Path, bucket_name: str | None) -> str | None:
+    if not bucket_name:
+        return None
+    try:
+        client = storage.Client()
+        bucket = client.bucket(bucket_name)
+        blob = bucket.blob(path.name)
+        blob.upload_from_filename(path.as_posix())
+        return f"gs://{bucket_name}/{blob.name}"
+    except Exception:
+        logger.exception("Failed to upload %s to bucket %s", path, bucket_name)
+        return None
+    
+
 def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, object]:
     """Synchronous helper that invokes Gemini and extracts useful payload."""
     if not api_key:
@@ -128,6 +149,7 @@ def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, obje
 
     texts: list[str] = []
     generated_paths: list[str] = []
+    generated_gcs_paths: list[str] = []
 
     for index, part in enumerate(getattr(response, "parts", [])):
         text = getattr(part, "text", None)
@@ -147,6 +169,9 @@ def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, obje
             )
             generated_image.save(generated_path)
             generated_paths.append(str(generated_path))
+            gcs_uri = _upload_to_gcs(generated_path, "eiai-images")
+            if gcs_uri:
+                generated_gcs_paths.append(gcs_uri)
 
     payload: dict[str, object] = {
         "status": "ok",
@@ -157,5 +182,7 @@ def _call_gemini(image_paths: list[Path], api_key: str | None) -> dict[str, obje
         payload["text"] = "\n\n".join(texts)
     if generated_paths:
         payload["generated_images"] = generated_paths
+    if generated_gcs_paths:
+        payload["generated_images_gcs"] = generated_gcs_paths
 
     return payload
