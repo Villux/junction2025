@@ -1,22 +1,38 @@
 MASTER_PROMPT = """
 
 ## MASTER PROMPT ##
-Transform this Polaroid-style square photo of a hackathon team into a retro-futuristic, cool, and sexy group portrait. Keep all faces and likenesses true to the original image.
+Transform this Polaroid-style square photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy group portrait. 
+Keep all faces and likenesses true to the original image.
 
-Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, and glowing pink highlights. Place the team in front of a neon-drenched futuristic cityscape at dusk, with atmospheric haze and soft nostalgic glow.
+Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
+and glowing pink highlights. Place the team in front of a neon-drenched futuristic 
+cityscape at dusk, with atmospheric haze and soft nostalgic glow.
 
-Update their outfits to stylishly retro-tech attire, blending 80s futurism with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking.
+Update their outfits to stylishly retro-tech attire, blending 80s futurism 
+with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking and super sexy.
 
 Subtly include visual references to the hackathon setting:
 – Futuristic UI holograms and led lights and displays
 – A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
 – Elements suggesting a global tech community (Finland, Japan, USA, Netherlands).
 
-This image should evoke the spirit of Junction 2025, which hosts events in 15+ countries and culminates in the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16). Maintain a square format consistent with the original Polaroid composition.”
+This image should evoke the spirit of Junction 2025,  the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16).
 
-This master prompt is extended with verbally given user input. Follow the user instructions so that main style guides of this prompt are not violated. If instructions are contradictory, prefer the master prompt and only take tiny details from user instructions.
 
-RETURN AN EDITED IMAGE FROM THE GIVEN ORIGINAL IMAGE
+This master prompt is extended with verbally given user input. 
+Follow the user instructions as style hints. 
+
+In the image edits, try to follow these rules:
+- Never add new people.
+- Vaporware style has to be recognizable. This style is easy to see from the color palette, lighting, and overall vibe.
+- Junction 2025 hackathon text and vibe must be preserved.
+
+Example: 
+If master prompt says "retro-futuristic 80s synthwave" and user says "make it look like a renaissance painting", 
+prefer "retro-futuristic 80s synthwave" style and only take small details from renaissance painting style, 
+like color palette or lighting style.
+
+OUTPUT IS AN EDITED IMAGE BASED ON THE ABOVE INSTRUCTIONS.
 
 ## MASTER PROMPT END ##
 """

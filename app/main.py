@@ -221,9 +221,8 @@ def _call_gemini(
     client = genai.Client(api_key=api_key)  # type: ignore[call-arg]
     base_path = image_paths[0] if image_paths else None
     images: list[Image.Image] = []
-    contents: list[Any] = [MASTER_PROMPT]
-    if user_prompt:
-        contents.append(user_prompt)
+    final_prompt = MASTER_PROMPT + f"\n\n{user_prompt}" if user_prompt else MASTER_PROMPT
+    contents: list[Any] = [final_prompt]
     try:
         for path in image_paths:
             image = Image.open(path)
