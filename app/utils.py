@@ -1,7 +1,7 @@
 MASTER_PROMPT = """
 
 ## MASTER PROMPT ##
-Transform this Polaroid-style square photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy group portrait. 
+Transform this photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy group portrait. 
 Keep all faces and likenesses true to the original image.
 
 Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
