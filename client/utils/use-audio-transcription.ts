@@ -2,7 +2,7 @@ import {
   ExpoSpeechRecognitionModule,
   useSpeechRecognitionEvent,
 } from "expo-speech-recognition";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type HistoryItem = {
   timestamp: number;
@@ -20,7 +20,8 @@ export function useAudioTranscription() {
   const [recognizing, setRecognizing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [transcriptHistory, setTranscriptHistory] = useState<HistoryItem[]>([]);
+  // const [transcriptHistory, setTranscriptHistory] = useState<HistoryItem[]>([]);
+  const transcriptHistory = useRef<HistoryItem[]>([]);
 
   async function handleStart() {
     const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -61,36 +62,36 @@ export function useAudioTranscription() {
 
     setTranscript(currentTranscript);
 
-    if (currentTranscript) {
-      const normalizedTranscript = currentTranscript.toLowerCase();
+    if (!isFinal || !currentTranscript) {
+      return;
+    }
 
-      // Check for start trigger word
-      if (
-        !isRecording &&
-        startTriggerWords.some((word) => normalizedTranscript.includes(word))
-      ) {
-        console.log("Start trigger detected, beginning recording...");
-        setIsRecording(true);
+    const normalizedTranscript = currentTranscript.toLowerCase();
 
-        if (isFinal) {
-          setTranscriptHistory([
-            { timestamp: Date.now(), transcript: currentTranscript },
-          ]);
-        } else {
-          setTranscriptHistory([]);
-        }
-      }
+    if (
+      !isRecording &&
+      startTriggerWords.some((word) => normalizedTranscript.includes(word))
+    ) {
+      console.log("Start trigger detected, beginning recording...");
+      setIsRecording(true);
 
-      // Only store transcripts if we're actively recording
-      if (isRecording) {
-        if (isFinal) {
-          console.log("Updating history:", currentTranscript);
-          setTranscriptHistory((prev) => [
-            ...prev,
-            { timestamp: Date.now(), transcript: currentTranscript },
-          ]);
-        }
-      }
+      console.log("Initializing history with:", normalizedTranscript);
+      // setTranscriptHistory([
+      //   { timestamp: Date.now(), transcript: normalizedTranscript },
+      // ]);
+      transcriptHistory.current = [
+        { timestamp: Date.now(), transcript: normalizedTranscript },
+      ];
+    } else if (isRecording) {
+      console.log("Updating history:", normalizedTranscript);
+      // setTranscriptHistory((prev) => [
+      //   ...prev,
+      //   { timestamp: Date.now(), transcript: normalizedTranscript },
+      // ]);
+      transcriptHistory.current.push({
+        timestamp: Date.now(),
+        transcript: normalizedTranscript,
+      });
     }
   });
 
@@ -111,7 +112,7 @@ export function useAudioTranscription() {
     console.log("Transcript updated:", transcript);
     console.log(
       "Transcript history:",
-      transcriptHistory.map((item) => item.transcript).join(" / ")
+      transcriptHistory.current.map((item) => item.transcript).join(" / ")
     );
   }, [transcriptHistory]);
 

@@ -35,16 +35,6 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
   const transcription = useAudioTranscription();
   const dotOpacity = useRef(new Animated.Value(1)).current;
 
-  const historyText = transcription.history
-    .map((item) => item.transcript)
-    .join(" ")
-    .trim();
-
-  const promptText = historyText.replace(
-    new RegExp(startTriggerWords.join("|"), "gi"),
-    ""
-  );
-
   // useEffect(() => {
   //   fetch(`${config.API_URL}/images/gcs`, {
   //     headers: { "X-API-Key": config.API_KEY },
@@ -153,7 +143,7 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
     }
   );
 
-  const takePicture = useStableCallback(async (text: string) => {
+  const takePicture = useStableCallback(async () => {
     // Block rapid picture taking
     if (pictureBlock.current) {
       console.log("Picture taking is blocked, skipping...");
@@ -163,6 +153,18 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
     pictureBlock.current = true;
 
     console.log("Starting to take picture...");
+
+    const historyText = transcription.history.current
+      .map((item) => item.transcript)
+      .join(" ")
+      .trim();
+
+    const promptText = historyText.replace(
+      new RegExp(startTriggerWords.join("|"), "gi"),
+      ""
+    );
+
+    console.log("Captured text for upload:", promptText);
 
     if (cameraRef.current) {
       try {
@@ -180,8 +182,8 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
           const croppedImageUri = await cropImage(photo.uri);
           setCapturedImage(croppedImageUri);
 
-          console.log("Uploading picture with captured text:", text);
-          await uploadPhoto(croppedImageUri, text);
+          console.log("Uploading picture with captured text:", promptText);
+          await uploadPhoto(croppedImageUri, promptText);
         }
       } catch (error) {
         console.error("Error taking picture:", error);
@@ -194,9 +196,7 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
 
   useVolumeChange(() => {
     console.log("Volume button pressed, taking picture...");
-    console.log("History text:", historyText);
-    console.log("Prompt text:", promptText);
-    takePicture(promptText);
+    takePicture();
   });
 
   // Reset picture block after 3 seconds
@@ -321,9 +321,7 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
 
       {isUploading && (
         <View style={styles.uploadIndicator}>
-          <Text style={styles.uploadText}>
-            Uploading with prompt: {promptText}
-          </Text>
+          <Text style={styles.uploadText}>Uploading...</Text>
         </View>
       )}
     </View>
