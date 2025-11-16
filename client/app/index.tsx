@@ -8,6 +8,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   Button,
   Image,
   StatusBar,
@@ -33,6 +34,7 @@ export default function Index() {
   const player = useAudioPlayer(audioSource);
   const dimensions = useWindowDimensions();
   const transcription = useAudioTranscription();
+  const dotOpacity = useRef(new Animated.Value(1)).current;
 
   // useEffect(() => {
   //   fetch(`${config.API_URL}/images/gcs`, {
@@ -89,7 +91,7 @@ export default function Index() {
       const croppedImage = await context.renderAsync();
 
       const result = await croppedImage.saveAsync({
-        compress: 0.5,
+        compress: 0.3,
         format: ImageManipulator.SaveFormat.JPEG,
       });
 
@@ -112,11 +114,16 @@ export default function Index() {
         name: "photo.jpg",
       } as any);
 
-      formData.append("user_prompt", capturedText);
-      // formData.append(
-      //   "user_prompt",
-      //   "Turn this into a superhero comic book cover"
-      // );
+      if (capturedText) {
+        formData.append(
+          "user_prompt",
+          `<user-instruction>${capturedText}</user-instruction>`
+        );
+      } else {
+        formData.append("user_prompt", "");
+      }
+
+      console.log("Uploading photo with prompt:", capturedText);
 
       const response = await fetch(`${config.API_URL}/images`, {
         method: "POST",
@@ -139,28 +146,37 @@ export default function Index() {
 
   async function takePicture() {
     // Block rapid picture taking
-    if (pictureBlock.current) return;
+    if (pictureBlock.current) {
+      console.log("Picture taking is blocked, skipping...");
+      return;
+    }
+
     pictureBlock.current = true;
+
+    console.log("Starting to take picture...");
 
     if (cameraRef.current) {
       try {
+        console.log("Playing sound...");
         player.seekTo(0);
         player.play();
 
         const capturedText = transcription.capturedText;
-
-        transcription.clearCaptured();
-
         await sleep(500);
 
+        console.log("Taking picture...");
         const photo = await cameraRef.current.takePictureAsync();
 
         if (photo) {
+          console.log("Cropping picture...");
           const croppedImageUri = await cropImage(photo.uri);
           setCapturedImage(croppedImageUri);
 
-          // Upload the cropped photo with captured text
+          console.log("Uploading picture...");
           await uploadPhoto(croppedImageUri, capturedText);
+
+          console.log("Resetting transcription state...");
+          transcription.reset();
         }
       } catch (error) {
         console.error("Error taking picture:", error);
@@ -172,16 +188,43 @@ export default function Index() {
     takePicture();
   });
 
-  // Reset picture block after 5 seconds
+  // Reset picture block after 3 seconds
   useInterval(() => {
     pictureBlock.current = false;
-  }, 5000);
+  }, 3000);
 
   useEffect(() => {
     if (cameraPermission && cameraPermission.granted) {
       transcription.start();
     }
   }, [cameraPermission]);
+
+  useEffect(() => {
+    if (transcription.isRecording) {
+      // Start pulsing animation
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(dotOpacity, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+      return () => pulseAnimation.stop();
+    } else {
+      // Reset to full opacity when not recording
+      dotOpacity.stopAnimation(() => {
+        dotOpacity.setValue(1);
+      });
+    }
+  }, [transcription.isRecording]);
 
   if (!cameraPermission) {
     return <View />;
@@ -218,7 +261,27 @@ export default function Index() {
           facing="back"
           flash="on"
         />
-        <ViewfinderOverlay />
+
+        <View style={styles.viewfinderOverlay}>
+          <View style={[styles.cornerBracket, styles.topLeft]} />
+          <View style={[styles.cornerBracket, styles.topRight]} />
+          <View style={[styles.cornerBracket, styles.bottomLeft]} />
+          <View style={[styles.cornerBracket, styles.bottomRight]} />
+          <View style={[styles.innerCornerBracket, styles.innerTopLeft]} />
+          <View style={[styles.innerCornerBracket, styles.innerTopRight]} />
+          <View style={[styles.innerCornerBracket, styles.innerBottomLeft]} />
+          <View style={[styles.innerCornerBracket, styles.innerBottomRight]} />
+          <View style={styles.focusCircle} />
+          {transcription.recognizing && (
+            <Animated.View
+              style={[
+                styles.viewfinderDot,
+                { opacity: transcription.isRecording ? dotOpacity : 1 },
+              ]}
+            />
+          )}
+        </View>
+
         <View style={styles.viewFinderMask} />
       </View>
 
@@ -231,7 +294,7 @@ export default function Index() {
       {transcription.capturedText.length > 0 && (
         <TouchableOpacity
           style={styles.capturedTextContainer}
-          onPress={transcription.clearCaptured}
+          onPress={transcription.reset}
           activeOpacity={0.8}
         >
           <Text style={styles.capturedText}>{transcription.capturedText}</Text>
@@ -248,27 +311,15 @@ export default function Index() {
         </Text>
       )}
 
+      {transcription.recognizing && (
+        <View style={styles.recognizingIndicator} />
+      )}
+
       {isUploading && (
         <View style={styles.uploadIndicator}>
           <Text style={styles.uploadText}>Uploading photo...</Text>
         </View>
       )}
-    </View>
-  );
-}
-
-function ViewfinderOverlay() {
-  return (
-    <View style={styles.viewfinderOverlay}>
-      <View style={[styles.cornerBracket, styles.topLeft]} />
-      <View style={[styles.cornerBracket, styles.topRight]} />
-      <View style={[styles.cornerBracket, styles.bottomLeft]} />
-      <View style={[styles.cornerBracket, styles.bottomRight]} />
-      <View style={[styles.innerCornerBracket, styles.innerTopLeft]} />
-      <View style={[styles.innerCornerBracket, styles.innerTopRight]} />
-      <View style={[styles.innerCornerBracket, styles.innerBottomLeft]} />
-      <View style={[styles.innerCornerBracket, styles.innerBottomRight]} />
-      <View style={styles.focusCircle} />
     </View>
   );
 }
@@ -282,6 +333,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingBottom: 10,
     color: "white",
+  },
+  recognizingIndicator: {
+    position: "absolute",
+    bottom: 50,
+    right: 20,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "red",
   },
   transcriptionMessage: {
     position: "absolute",
@@ -317,6 +377,17 @@ const styles = StyleSheet.create({
   viewfinderOverlay: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 8,
+  },
+  viewfinderDot: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    marginTop: -1,
+    marginLeft: -1,
   },
   cornerBracket: {
     position: "absolute",
