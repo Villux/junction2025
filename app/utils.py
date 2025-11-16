@@ -6,7 +6,7 @@ Keep all faces and likenesses true to the original image.
 
 Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
 and glowing pink highlights. Place the team in front of a neon-drenched futuristic 
-cityscape at dusk, with atmospheric haze and soft nostalgic glow.
+cityscape at dusk or a desert, with atmospheric haze and soft nostalgic glow.
 
 Update their outfits to stylishly retro-tech attire, blending 80s futurism 
 with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking and super sexy.
@@ -21,17 +21,7 @@ This image should evoke the spirit of Junction 2025,  the largest AI hackathon i
 This master prompt is extended with verbally given user input. 
 Follow the user instructions as style hints. 
 
-In the image edits, try to follow these rules:
-- Never add new people.
-- Vaporware style has to be recognizable. This style is easy to see from the color palette, lighting, and overall vibe.
-- Junction 2025 hackathon text and vibe must be preserved.
-
-Example: 
-If master prompt says "retro-futuristic 80s synthwave" and user says "make it look like a renaissance painting", 
-prefer "retro-futuristic 80s synthwave" style and only take small details from renaissance painting style, 
-like color palette or lighting style.
-
-OUTPUT IS AN EDITED IMAGE BASED ON THE ABOVE INSTRUCTIONS.
+OUTPUT IS AN EDITED IMAGE BASED ON THE ABOVE INSTRUCTIONS IF YOU CANT FOLLOW THE INSTRUCTIONS STILL RETURN AN IMAGE.
 
 ## MASTER PROMPT END ##
 """
