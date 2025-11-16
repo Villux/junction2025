@@ -123,8 +123,6 @@ export default function Index() {
         formData.append("user_prompt", "");
       }
 
-      console.log("Uploading photo with prompt:", capturedText);
-
       const response = await fetch(`${config.API_URL}/images`, {
         method: "POST",
         body: formData,
@@ -172,14 +170,14 @@ export default function Index() {
           const croppedImageUri = await cropImage(photo.uri);
           setCapturedImage(croppedImageUri);
 
-          console.log("Uploading picture...");
+          console.log("Uploading picture with captured text:", capturedText);
           await uploadPhoto(croppedImageUri, capturedText);
-
-          console.log("Resetting transcription state...");
-          transcription.reset();
         }
       } catch (error) {
         console.error("Error taking picture:", error);
+      } finally {
+        console.log("Resetting transcription state...");
+        transcription.reset();
       }
     }
   }
@@ -252,7 +250,7 @@ export default function Index() {
       <View
         style={{
           ...styles.cameraContainer,
-          top: dimensions.height / 2 - cameraViewfinderSize / 2 + 133,
+          top: dimensions.height / 2 - cameraViewfinderSize / 2 + 130,
         }}
       >
         <CameraView

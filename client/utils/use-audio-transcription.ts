@@ -9,14 +9,13 @@ type HistoryItem = {
   transcript: string;
 };
 
-const startTriggerWord = "camera";
+const startTriggerWord = "okay camera";
 
 export function useAudioTranscription() {
   const [recognizing, setRecognizing] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [capturedText, setCapturedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const fullTranscriptRef = useRef<string>("");
   const transcriptHistory = useRef<HistoryItem[]>([]);
 
   async function handleStart() {
@@ -58,21 +57,22 @@ export function useAudioTranscription() {
 
     setTranscript(currentTranscript);
 
-    // Update full transcript and history
+    let recording = isRecording;
+
     if (currentTranscript) {
       const normalizedTranscript = currentTranscript.toLowerCase();
 
       // Check for start trigger word
-      if (!isRecording && normalizedTranscript.includes(startTriggerWord)) {
+      if (!recording && normalizedTranscript.includes(startTriggerWord)) {
+        console.log("Start trigger detected, beginning recording...");
         setIsRecording(true);
+        recording = true;
         // Clear any previous history when starting new recording
         transcriptHistory.current = [];
-        fullTranscriptRef.current = "";
-        return;
       }
 
       // Only store transcripts if we're actively recording
-      if (isRecording) {
+      if (recording) {
         if (isFinal) {
           transcriptHistory.current.push({
             timestamp: Date.now(),
@@ -80,12 +80,10 @@ export function useAudioTranscription() {
           });
         }
 
-        // Only store the last 10 entries
-        if (transcriptHistory.current.length > 10) {
+        // Only store the last 100 entries
+        if (transcriptHistory.current.length > 100) {
           transcriptHistory.current.shift();
         }
-
-        fullTranscriptRef.current = currentTranscript;
 
         const transcriptsInWindow = transcriptHistory.current
           .map((item) => item.transcript)
@@ -93,27 +91,26 @@ export function useAudioTranscription() {
           .toLowerCase()
           .trim();
 
-        // Check for end trigger phrase "one, two, three"
+        // Check for end trigger phrase "one two three" or reverse "three two one"
         if (
           transcriptsInWindow.includes("one two three") ||
-          transcriptsInWindow.includes("one, two, three") ||
           transcriptsInWindow.includes("1 2 3") ||
-          transcriptsInWindow.includes("123")
+          transcriptsInWindow.includes("123") ||
+          transcriptsInWindow.includes("three two one") ||
+          transcriptsInWindow.includes("3 2 1") ||
+          transcriptsInWindow.includes("321")
         ) {
-          if (transcriptsInWindow.length > 0) {
-            // Remove trigger words from the captured text
-            const text = `${transcriptsInWindow
-              .replace(new RegExp(startTriggerWord, "gi"), "")
-              .replace(/one,? two,? three|1 2 3|123$/i, "")
-              .trim()}`;
+          console.log("End trigger detected, capturing text...");
+          // Remove trigger words from the captured text
+          const text = `${transcriptsInWindow
+            .replace(new RegExp(startTriggerWord, "gi"), "")
+            .replace(/one two three|1 2 3|123|three two one|3 2 1|321$/i, "")
+            .trim()}`;
 
-            setCapturedText(text);
-            setTranscript("");
-            setIsRecording(false);
-
-            transcriptHistory.current = [];
-            fullTranscriptRef.current = "";
-          }
+          transcriptHistory.current = [];
+          setCapturedText(text);
+          setTranscript("");
+          setIsRecording(false);
         }
       }
     }
@@ -121,7 +118,7 @@ export function useAudioTranscription() {
 
   useSpeechRecognitionEvent("error", (event) => {
     console.log("error code:", event.error, "error message:", event.message);
-    
+
     // Attempt to restart recognition after an error
     setTimeout(() => {
       if (!recognizing) {
@@ -134,7 +131,15 @@ export function useAudioTranscription() {
 
   useEffect(() => {
     console.log("Transcript updated:", transcript);
+    console.log(
+      "Transcript history:",
+      transcriptHistory.current.map((item) => item.transcript).join(" / ")
+    );
   }, [transcript]);
+
+  useEffect(() => {
+    console.log("Captured text updated:", capturedText);
+  }, [capturedText]);
 
   return {
     recognizing,
@@ -144,7 +149,6 @@ export function useAudioTranscription() {
     start: handleStart,
     reset: () => {
       transcriptHistory.current = [];
-      fullTranscriptRef.current = "";
       setCapturedText("");
       setTranscript("");
       setIsRecording(false);
