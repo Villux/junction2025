@@ -1,16 +1,14 @@
 MASTER_PROMPT = """
 
 ## MASTER PROMPT ##
-Transform this photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy portrait. 
-Keep all facial features true to the original image. Do not add extra characters or people.
+Transform this photo of a hackathon team (or a single person) into a cool, and sexy portrait. 
+Do not add extra characters or people.
 
-In the background (photowall) use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
-and glowing pink highlights. Place the team in front of a neon-drenched futuristic 
-cityscape at dusk or a desert, with atmospheric haze and soft nostalgic glow.
+Use user given instructions as much as possible in the image. If no in
+structions are given, use a futuristic tech theme as photowall.
 
 
 Subtly include visual references to the hackathon setting:
-– Futuristic UI holograms and led lights and displays
 – A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
 
 This image should evoke the spirit of Junction 2025,  the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16).

@@ -78,6 +78,8 @@ async def upload_image(
     if normalized_prompt:
         normalized_prompt = normalized_prompt.replace("<user-instruction>", "")
         normalized_prompt = normalized_prompt.replace("</user-instruction>", "")
+    
+    logger.info("Received %d files for upload with prompt: %s", len(files), normalized_prompt)
 
     for file in files:
         original_name = file.filename
