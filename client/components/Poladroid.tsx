@@ -5,7 +5,6 @@ import {
   useAudioTranscription,
 } from "@/utils/use-audio-transcription";
 import { useInterval } from "@/utils/use-interval";
-import { useStableCallback } from "@/utils/use-stable-callback";
 import { useVolumeChange } from "@/utils/use-volume-change";
 import { useAudioPlayer } from "expo-audio";
 import { CameraView, useCameraPermissions } from "expo-camera";
@@ -26,7 +25,6 @@ const cameraViewfinderSize = 125;
 
 export function Poladroid({ resetApp }: { resetApp: () => void }) {
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const pictureBlock = useRef(false);
   const cameraRef = useRef<CameraView>(null);
@@ -35,36 +33,9 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
   const transcription = useAudioTranscription();
   const dotOpacity = useRef(new Animated.Value(1)).current;
 
-  // useEffect(() => {
-  //   fetch(`${config.API_URL}/images/gcs`, {
-  //     headers: { "X-API-Key": config.API_KEY },
-  //   }).then(async (response) => {
-  //     if (!response.ok) {
-  //       console.error("Failed to fetch GCS images:", response.status);
-  //       return;
-  //     }
-
-  //     const data = await response.json();
-
-  //     console.log(
-  //       "Images:",
-  //       // Sort by created_at descending
-  //       data.items
-  //         .slice()
-  //         .sort(
-  //           (a: any, b: any) =>
-  //             new Date(b.created_at).getTime() -
-  //             new Date(a.created_at).getTime()
-  //         )
-  //         .map((item: any) => item.url)
-  //     );
-  //   });
-  // }, []);
-
-  const cropImage = useStableCallback(async (imageUri: string) => {
+  async function cropImage(imageUri: string) {
     try {
       const context = ImageManipulator.ImageManipulator.manipulate(imageUri);
-
       const image = await context.renderAsync();
       const imageWidth = image.width;
       const imageHeight = image.height;
@@ -99,51 +70,49 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
       console.error("Error cropping image:", error);
       return imageUri; // Return original if cropping fails
     }
-  });
+  }
 
-  const uploadPhoto = useStableCallback(
-    async (photoUri: string, text: string) => {
-      setIsUploading(true);
+  async function uploadPhoto(photoUri: string, text: string) {
+    setIsUploading(true);
 
-      try {
-        const formData = new FormData();
+    try {
+      const formData = new FormData();
 
-        formData.append("files", {
-          uri: photoUri,
-          type: "image/jpeg",
-          name: "photo.jpg",
-        } as any);
+      formData.append("files", {
+        uri: photoUri,
+        type: "image/jpeg",
+        name: "photo.jpg",
+      } as any);
 
-        if (text) {
-          formData.append(
-            "user_prompt",
-            `<user-instruction>${text}</user-instruction>`
-          );
-        } else {
-          formData.append("user_prompt", "");
-        }
-
-        const response = await fetch(`${config.API_URL}/images`, {
-          method: "POST",
-          body: formData,
-          headers: { "X-API-Key": config.API_KEY },
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          console.log("Upload result:", result);
-        } else {
-          throw new Error(`Upload failed with status: ${response.status}`);
-        }
-      } catch (error) {
-        console.error("Upload error:", error);
-      } finally {
-        setIsUploading(false);
+      if (text) {
+        formData.append(
+          "user_prompt",
+          `<user-instruction>${text}</user-instruction>`
+        );
+      } else {
+        formData.append("user_prompt", "");
       }
-    }
-  );
 
-  const takePicture = useStableCallback(async () => {
+      const response = await fetch(`${config.API_URL}/images`, {
+        method: "POST",
+        body: formData,
+        headers: { "X-API-Key": config.API_KEY },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Upload result:", result);
+      } else {
+        throw new Error(`Upload failed with status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  async function takePicture() {
     // Block rapid picture taking
     if (pictureBlock.current) {
       console.log("Picture taking is blocked, skipping...");
@@ -157,6 +126,7 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
     const historyText = transcription.history.current
       .map((item) => item.transcript)
       .join(" ")
+      .toLowerCase()
       .trim();
 
     const promptText = historyText.replace(
@@ -180,7 +150,6 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
         if (photo) {
           console.log("Cropping picture...");
           const croppedImageUri = await cropImage(photo.uri);
-          setCapturedImage(croppedImageUri);
 
           console.log("Uploading picture with captured text:", promptText);
           await uploadPhoto(croppedImageUri, promptText);
@@ -192,7 +161,7 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
       console.log("Resetting app...");
       resetApp();
     }
-  });
+  }
 
   useVolumeChange(() => {
     console.log("Volume button pressed, taking picture...");
@@ -298,12 +267,6 @@ export function Poladroid({ resetApp }: { resetApp: () => void }) {
 
         <View style={styles.viewFinderMask} />
       </View>
-
-      {/* {capturedImage && (
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: capturedImage }} style={styles.capturedImage} />
-        </View>
-      )} */}
 
       {transcription.recognizing && transcription.transcript.length > 0 && (
         <Text
