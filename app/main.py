@@ -27,6 +27,9 @@ from google.cloud import storage
 
 app = FastAPI(title="Junction API", version="0.1.0")
 logger = logging.getLogger(__name__)
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
+logging.basicConfig(level=LOG_LEVEL)
+logger.setLevel(LOG_LEVEL)
 
 API_KEY_NAME = "X-API-Key"
 EXPECTED_API_KEY = os.environ.get("JUNCTION_API_KEY")
@@ -79,7 +82,7 @@ async def upload_image(
         normalized_prompt = normalized_prompt.replace("<user-instruction>", "")
         normalized_prompt = normalized_prompt.replace("</user-instruction>", "")
     
-    logger.info("Received %d files for upload with prompt: %s", len(files), normalized_prompt)
+    logger.info("Received prompt: %s", normalized_prompt)
 
     for file in files:
         original_name = file.filename
