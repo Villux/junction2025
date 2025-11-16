@@ -14,7 +14,6 @@ with modern AI-culture influences. The overall vibe should be energetic, confide
 Subtly include visual references to the hackathon setting:
 – Futuristic UI holograms and led lights and displays
 – A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
-– Elements suggesting a global tech community (Finland, Japan, USA, Netherlands).
 
 This image should evoke the spirit of Junction 2025,  the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16).
 
