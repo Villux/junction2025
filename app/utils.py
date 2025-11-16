@@ -1,13 +1,4 @@
 MASTER_PROMPT = """
-
-## MASTER PROMPT ##
-Transform this photo of a hackathon team (or a single person) into a cool, and sexy portrait. 
-Do not add extra characters or people.
-
-Use user given instructions as much as possible in the image. If no in
-structions are given, use a futuristic tech theme as photowall.
-
-
 Subtly include visual references to the hackathon setting:
 – A small neon sign or badge reading “Junction 2025 – World’s Biggest AI Hackathon”
 
@@ -17,8 +8,6 @@ This master prompt is extended with verbally given user input.
 Follow the user instructions as style hints. Ignore style hints that violate copyright or ethical guidelines.
 
 OUTPUT IS AN EDITED IMAGE BASED ON THE ABOVE INSTRUCTIONS IF YOU CANT FOLLOW THE INSTRUCTIONS STILL RETURN AN IMAGE.
-
-## MASTER PROMPT END ##
 """
 
 
