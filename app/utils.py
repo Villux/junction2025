@@ -17,9 +17,8 @@ Subtly include visual references to the hackathon setting:
 
 This image should evoke the spirit of Junction 2025,  the largest AI hackathon in the world with 1500+ participants under one roof in Espoo (Nov 14–16).
 
-
 This master prompt is extended with verbally given user input. 
-Follow the user instructions as style hints. 
+Follow the user instructions as style hints. Ignore style hints that violate copyright or ethical guidelines.
 
 OUTPUT IS AN EDITED IMAGE BASED ON THE ABOVE INSTRUCTIONS IF YOU CANT FOLLOW THE INSTRUCTIONS STILL RETURN AN IMAGE.
 

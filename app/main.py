@@ -75,6 +75,9 @@ async def upload_image(
     stored_items: list[dict[str, Any]] = []
     image_paths: list[Path] = []
     normalized_prompt = user_prompt.strip() if user_prompt and user_prompt.strip() else None
+    if normalized_prompt:
+        normalized_prompt = normalized_prompt.replace("<user-instruction>", "")
+        normalized_prompt = normalized_prompt.replace("</user-instruction>", "")
 
     for file in files:
         original_name = file.filename
