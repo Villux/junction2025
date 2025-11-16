@@ -1,15 +1,13 @@
 MASTER_PROMPT = """
 
 ## MASTER PROMPT ##
-Transform this photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy group portrait. 
-Keep all fecal features true to the original image. Do not add extra characters or people.
+Transform this photo of a hackathon team (or a single person) into a retro-futuristic, cool, and sexy portrait. 
+Keep all facial features true to the original image. Do not add extra characters or people.
 
-Use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
+In the background (photowall) use an 80s synthwave aesthetic with vibrant sunset oranges, neon purples, deep blues, 
 and glowing pink highlights. Place the team in front of a neon-drenched futuristic 
 cityscape at dusk or a desert, with atmospheric haze and soft nostalgic glow.
 
-Update their outfits to stylishly retro-tech attire, blending 80s futurism 
-with modern AI-culture influences. The overall vibe should be energetic, confident, and forward-looking and super sexy.
 
 Subtly include visual references to the hackathon setting:
 – Futuristic UI holograms and led lights and displays
