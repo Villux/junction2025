@@ -9,13 +9,18 @@ type HistoryItem = {
   transcript: string;
 };
 
-const startTriggerWord = "okay camera";
+export const startTriggerWords = [
+  "okay camera",
+  "hey camera",
+  "ok camera",
+  "okey camera",
+];
 
 export function useAudioTranscription() {
   const [recognizing, setRecognizing] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [capturedText, setCapturedText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  // const [transcriptHistory, setTranscriptHistory] = useState<HistoryItem[]>([]);
   const transcriptHistory = useRef<HistoryItem[]>([]);
 
   async function handleStart() {
@@ -57,62 +62,36 @@ export function useAudioTranscription() {
 
     setTranscript(currentTranscript);
 
-    let recording = isRecording;
+    if (!isFinal || !currentTranscript) {
+      return;
+    }
 
-    if (currentTranscript) {
-      const normalizedTranscript = currentTranscript.toLowerCase();
+    const normalizedTranscript = currentTranscript.toLowerCase();
 
-      // Check for start trigger word
-      if (!recording && normalizedTranscript.includes(startTriggerWord)) {
-        console.log("Start trigger detected, beginning recording...");
-        setIsRecording(true);
-        recording = true;
-        // Clear any previous history when starting new recording
-        transcriptHistory.current = [];
-      }
+    if (
+      !isRecording &&
+      startTriggerWords.some((word) => normalizedTranscript.includes(word))
+    ) {
+      console.log("Start trigger detected, beginning recording...");
+      setIsRecording(true);
 
-      // Only store transcripts if we're actively recording
-      if (recording) {
-        if (isFinal) {
-          transcriptHistory.current.push({
-            timestamp: Date.now(),
-            transcript: currentTranscript,
-          });
-        }
-
-        // Only store the last 100 entries
-        if (transcriptHistory.current.length > 100) {
-          transcriptHistory.current.shift();
-        }
-
-        const transcriptsInWindow = transcriptHistory.current
-          .map((item) => item.transcript)
-          .join(" ")
-          .toLowerCase()
-          .trim();
-
-        // Check for end trigger phrase "one two three" or reverse "three two one"
-        if (
-          transcriptsInWindow.includes("one two three") ||
-          transcriptsInWindow.includes("1 2 3") ||
-          transcriptsInWindow.includes("123") ||
-          transcriptsInWindow.includes("three two one") ||
-          transcriptsInWindow.includes("3 2 1") ||
-          transcriptsInWindow.includes("321")
-        ) {
-          console.log("End trigger detected, capturing text...");
-          // Remove trigger words from the captured text
-          const text = `${transcriptsInWindow
-            .replace(new RegExp(startTriggerWord, "gi"), "")
-            .replace(/one two three|1 2 3|123|three two one|3 2 1|321$/i, "")
-            .trim()}`;
-
-          transcriptHistory.current = [];
-          setCapturedText(text);
-          setTranscript("");
-          setIsRecording(false);
-        }
-      }
+      console.log("Initializing history with:", normalizedTranscript);
+      // setTranscriptHistory([
+      //   { timestamp: Date.now(), transcript: normalizedTranscript },
+      // ]);
+      transcriptHistory.current = [
+        { timestamp: Date.now(), transcript: normalizedTranscript },
+      ];
+    } else if (isRecording) {
+      console.log("Updating history:", normalizedTranscript);
+      // setTranscriptHistory((prev) => [
+      //   ...prev,
+      //   { timestamp: Date.now(), transcript: normalizedTranscript },
+      // ]);
+      transcriptHistory.current.push({
+        timestamp: Date.now(),
+        transcript: normalizedTranscript,
+      });
     }
   });
 
@@ -135,23 +114,13 @@ export function useAudioTranscription() {
       "Transcript history:",
       transcriptHistory.current.map((item) => item.transcript).join(" / ")
     );
-  }, [transcript]);
-
-  useEffect(() => {
-    console.log("Captured text updated:", capturedText);
-  }, [capturedText]);
+  }, [transcriptHistory]);
 
   return {
     recognizing,
     transcript,
-    capturedText,
     isRecording,
+    history: transcriptHistory,
     start: handleStart,
-    reset: () => {
-      transcriptHistory.current = [];
-      setCapturedText("");
-      setTranscript("");
-      setIsRecording(false);
-    },
   };
 }

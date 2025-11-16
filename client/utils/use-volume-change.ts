@@ -10,8 +10,8 @@ export function useVolumeChange(callback: () => void) {
   useEffect(() => {
     async function handleVolume(newVolume: { volume: number } | null = null) {
       const { volume } = newVolume ?? (await VolumeManager.getVolume());
-      if (volume !== 0.95) {
-        await VolumeManager.setVolume(0.95);
+      if (volume !== 0.70) {
+        await VolumeManager.setVolume(0.70);
       }
     }
 
@@ -26,5 +26,5 @@ export function useVolumeChange(callback: () => void) {
     return () => {
       volumeListener.remove();
     };
-  }, [appState]);
+  }, [appState, callback]);
 }

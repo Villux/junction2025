@@ -7,6 +7,7 @@
     "start:clean": "expo start --clear",
     "android": "expo run:android",
     "android:clean": "expo run:android --no-build-cache",
+    "android:release": "expo run:android --variant=release",
     "ios": "expo run:ios",
     "prebuild": "npx expo prebuild",
     "prebuild:clean": "npx expo prebuild --clean",
